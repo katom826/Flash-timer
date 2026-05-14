@@ -13,6 +13,7 @@ const timeDisplay = document.getElementById("timeDisplay");
 const progressCircle = document.querySelector(".gauge__progress");
 
 const LS_KEY_MINUTES = "flash_timer_minutes";
+const PREV_VALUE_KEY = "prevValue";
 
 let totalSeconds = 0;
 let remainingSeconds = 0;
@@ -149,6 +150,20 @@ minutesInput.addEventListener("input", () => {
   } catch {
     // ignore
   }
+});
+
+minutesInput.addEventListener("focus", () => {
+  if (minutesInput.value === "") return;
+  minutesInput.dataset[PREV_VALUE_KEY] = minutesInput.value;
+  minutesInput.value = "";
+});
+
+minutesInput.addEventListener("blur", () => {
+  if (minutesInput.value !== "") return;
+  const prev = minutesInput.dataset[PREV_VALUE_KEY];
+  if (!prev) return;
+  minutesInput.value = prev;
+  delete minutesInput.dataset[PREV_VALUE_KEY];
 });
 
 setGaugeProgress(0);
