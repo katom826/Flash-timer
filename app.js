@@ -28,7 +28,6 @@ function setMode(mode) {
 
   if (mode !== "timeup") appEl.classList.remove("is-blinking");
   if (mode === "timeup") appEl.classList.add("is-blinking");
-  if (mode === "settings") minutesInput.focus();
 }
 
 function clampInt(value, min, max) {
