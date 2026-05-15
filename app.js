@@ -4,15 +4,18 @@ const panelSettings = document.getElementById("panel-settings");
 const panelRunning = document.getElementById("panel-running");
 const panelTimeup = document.getElementById("panel-timeup");
 
-const minutesInput = document.getElementById("minutesInput");
-const startBtn = document.getElementById("startBtn");
+const minutesInput1 = document.getElementById("minutesInput1");
+const minutesInput2 = document.getElementById("minutesInput2");
+const startBtn1 = document.getElementById("startBtn1");
+const startBtn2 = document.getElementById("startBtn2");
 const stopBtnRunning = document.getElementById("stopBtnRunning");
 const stopBtnTimeup = document.getElementById("stopBtnTimeup");
 
 const timeDisplay = document.getElementById("timeDisplay");
 const progressCircle = document.querySelector(".gauge__progress");
 
-const LS_KEY_MINUTES = "flash_timer_minutes";
+const LS_KEY_MINUTES_1 = "flash_timer_minutes_1";
+const LS_KEY_MINUTES_2 = "flash_timer_minutes_2";
 const PREV_VALUE_KEY = "prevValue";
 
 let totalSeconds = 0;
@@ -71,11 +74,12 @@ function updateUI() {
   setGaugeProgress(fraction);
 }
 
-function startTimer(minutes) {
+function startTimer(minutes, theme) {
   stopTick();
 
   totalSeconds = minutes * 60;
   remainingSeconds = totalSeconds;
+  if (theme) appEl.dataset.theme = theme;
   setMode("running");
   updateUI();
 
@@ -115,64 +119,80 @@ function resetToSettings() {
   remainingSeconds = 0;
   timeDisplay.textContent = "00:00";
   setGaugeProgress(0);
+  delete appEl.dataset.theme;
   setMode("settings");
 }
 
-startBtn.addEventListener("click", () => {
-  const raw = Number(minutesInput.value);
-  const minutes = clampInt(raw, 1, 999);
-  if (minutes == null) {
-    minutesInput.focus();
-    minutesInput.select?.();
-    return;
-  }
-  try {
-    localStorage.setItem(LS_KEY_MINUTES, String(minutes));
-  } catch {
-    // ignore
-  }
-  startTimer(minutes);
-});
+function attachPreset(inputEl, buttonEl, storageKey, theme) {
+  if (!inputEl || !buttonEl) return;
+
+  const save = () => {
+    const raw = Number(inputEl.value);
+    const minutes = clampInt(raw, 1, 999);
+    try {
+      if (minutes == null) localStorage.removeItem(storageKey);
+      else localStorage.setItem(storageKey, String(minutes));
+    } catch {
+      // ignore
+    }
+  };
+
+  const load = () => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved != null) inputEl.value = saved;
+    } catch {
+      // ignore
+    }
+  };
+
+  buttonEl.addEventListener("click", () => {
+    const raw = Number(inputEl.value);
+    const minutes = clampInt(raw, 1, 999);
+    if (minutes == null) {
+      inputEl.focus();
+      inputEl.select?.();
+      return;
+    }
+    try {
+      localStorage.setItem(storageKey, String(minutes));
+    } catch {
+      // ignore
+    }
+    startTimer(minutes, theme);
+  });
+
+  inputEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") buttonEl.click();
+  });
+
+  inputEl.addEventListener("input", save);
+
+  inputEl.addEventListener("focus", () => {
+    if (inputEl.value === "") return;
+    inputEl.dataset[PREV_VALUE_KEY] = inputEl.value;
+    inputEl.value = "";
+  });
+
+  inputEl.addEventListener("blur", () => {
+    if (inputEl.value !== "") {
+      save();
+      return;
+    }
+    const prev = inputEl.dataset[PREV_VALUE_KEY];
+    if (!prev) return;
+    inputEl.value = prev;
+    delete inputEl.dataset[PREV_VALUE_KEY];
+  });
+
+  load();
+}
 
 stopBtnRunning.addEventListener("click", resetToSettings);
 stopBtnTimeup.addEventListener("click", resetToSettings);
 
-minutesInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") startBtn.click();
-});
-
-minutesInput.addEventListener("input", () => {
-  const raw = Number(minutesInput.value);
-  const minutes = clampInt(raw, 1, 999);
-  try {
-    if (minutes == null) localStorage.removeItem(LS_KEY_MINUTES);
-    else localStorage.setItem(LS_KEY_MINUTES, String(minutes));
-  } catch {
-    // ignore
-  }
-});
-
-minutesInput.addEventListener("focus", () => {
-  if (minutesInput.value === "") return;
-  minutesInput.dataset[PREV_VALUE_KEY] = minutesInput.value;
-  minutesInput.value = "";
-});
-
-minutesInput.addEventListener("blur", () => {
-  if (minutesInput.value !== "") return;
-  const prev = minutesInput.dataset[PREV_VALUE_KEY];
-  if (!prev) return;
-  minutesInput.value = prev;
-  delete minutesInput.dataset[PREV_VALUE_KEY];
-});
+attachPreset(minutesInput1, startBtn1, LS_KEY_MINUTES_1, "blue");
+attachPreset(minutesInput2, startBtn2, LS_KEY_MINUTES_2, "orange");
 
 setGaugeProgress(0);
 resetToSettings();
-
-// Restore last minutes from localStorage
-try {
-  const saved = localStorage.getItem(LS_KEY_MINUTES);
-  if (saved != null) minutesInput.value = saved;
-} catch {
-  // ignore
-}

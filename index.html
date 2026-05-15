@@ -1,57 +1,83 @@
 <!doctype html>
 <html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flash Timer</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Flash Timer</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
+  <body>
+    <main class="app" id="app" data-mode="settings">
+      <!-- Settings Mode -->
+      <section class="panel" id="panel-settings" aria-labelledby="settings-title">
+        <h2 class="sr-only" id="settings-title">設定モード</h2>
 
-<body>
-  <main class="app" id="app" data-mode="settings">
-    <!-- Settings Mode -->
-    <section class="panel" id="panel-settings" aria-labelledby="settings-title">
-      <h2 class="sr-only" id="settings-title">設定モード</h2>
+        <div class="settings-row" aria-label="分数入力">
+          <div class="settings-col">
+            <label class="field">
+              <input
+                id="minutesInput1"
+                class="field__input"
+                type="number"
+                inputmode="numeric"
+                min="1"
+                max="999"
+                step="1"
+                aria-label="分数 1"
+              />
+            </label>
+            <button class="btn btn--primary" id="startBtn1" type="button">スタート</button>
+          </div>
 
-      <label class="field">
-        <input id="minutesInput" class="field__input" type="number" inputmode="numeric" min="1" max="999" step="1"
-          aria-label="分数" />
-      </label>
-
-      <button class="btn btn--primary" id="startBtn" type="button">スタート</button>
-    </section>
-
-    <!-- Running Mode -->
-    <section class="panel panel--center" id="panel-running" aria-labelledby="running-title" hidden>
-      <h2 class="sr-only" id="running-title">作動モード</h2>
-
-      <div class="gauge" role="img" aria-label="残り時間の円形ゲージ">
-        <svg class="gauge__svg" viewBox="0 0 120 120" aria-hidden="true">
-          <circle class="gauge__track" cx="60" cy="60" r="52"></circle>
-          <circle class="gauge__progress" cx="60" cy="60" r="52"></circle>
-        </svg>
-        <div class="gauge__center">
-          <div class="time" id="timeDisplay" aria-live="polite" aria-atomic="true">00:00</div>
+          <div class="settings-col">
+            <label class="field">
+              <input
+                id="minutesInput2"
+                class="field__input field__input--orange"
+                type="number"
+                inputmode="numeric"
+                min="1"
+                max="999"
+                step="1"
+                aria-label="分数 2"
+              />
+            </label>
+            <button class="btn btn--primary btn--orange" id="startBtn2" type="button">スタート</button>
+          </div>
         </div>
-      </div>
+      </section>
+
+      <!-- Running Mode -->
+      <section class="panel panel--center" id="panel-running" aria-labelledby="running-title" hidden>
+        <h2 class="sr-only" id="running-title">作動モード</h2>
+
+        <div class="gauge" role="img" aria-label="残り時間の円形ゲージ">
+          <svg class="gauge__svg" viewBox="0 0 120 120" aria-hidden="true">
+            <circle class="gauge__track" cx="60" cy="60" r="52"></circle>
+            <circle class="gauge__progress" cx="60" cy="60" r="52"></circle>
+          </svg>
+          <div class="gauge__center">
+            <div class="time" id="timeDisplay" aria-live="polite" aria-atomic="true">00:00</div>
+          </div>
+        </div>
 
         <button class="btn btn--primary" id="stopBtnRunning" type="button">終了</button>
-    </section>
+      </section>
 
-    <!-- Timeup Mode -->
-    <section class="panel panel--center" id="panel-timeup" aria-labelledby="timeup-title" hidden>
-      <h2 class="sr-only" id="timeup-title">タイムアップモード</h2>
+      <!-- Timeup Mode -->
+      <section class="panel panel--center" id="panel-timeup" aria-labelledby="timeup-title" hidden>
+        <h2 class="sr-only" id="timeup-title">タイムアップモード</h2>
 
-      <div class="timeup">
-        <div class="timeup__title">TIME UP</div>
-      </div>
+        <div class="timeup">
+          <div class="timeup__title">TIME UP</div>
+        </div>
 
         <button class="btn btn--primary" id="stopBtnTimeup" type="button">終了</button>
       </section>
-  </main>
+    </main>
 
-  <script src="app.js"></script>
-</body>
-
+    <script src="app.js"></script>
+  </body>
 </html>
+

@@ -3,11 +3,14 @@
   --panel: rgba(255, 255, 255, 0.06);
   --text: #e9eef6;
   --muted: rgba(233, 238, 246, 0.7);
-  --accent: #59d0ff;
+  --accent-1: #59d0ff;
+  --accent-2: #ff9a3a;
+  --accent-current: var(--accent-1);
   --danger: #ff3a3a;
   --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
   --ring-track: rgba(233, 238, 246, 0.14);
-  --ring: rgba(89, 208, 255, 0.95);
+  --ring: color-mix(in srgb, var(--accent-current) 92%, white);
+  --ring-glow: color-mix(in srgb, var(--accent-current) 22%, transparent);
 }
 
 * {
@@ -35,14 +38,19 @@ body {
   min-height: 100dvh;
   width: 100%;
   display: grid;
-  place-items: center;
+  align-content: center;
+  justify-items: stretch;
   padding: 24px;
+  padding-left: calc(24px + env(safe-area-inset-left));
+  padding-right: calc(24px + env(safe-area-inset-right));
+  padding-top: calc(24px + env(safe-area-inset-top));
+  padding-bottom: calc(24px + env(safe-area-inset-bottom));
 }
 
 .panel {
   max-width: 520px;
-  width: 100%;
-  margin: 0 auto;
+  width: min(520px, 100%);
+  justify-self: center;
   background: var(--panel);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
@@ -70,6 +78,25 @@ body {
   gap: 10px;
 }
 
+.settings-row {
+  display: flex;
+  gap: 14px;
+  align-items: stretch;
+}
+
+.settings-col {
+  flex: 1 1 0;
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+}
+
+@media (max-width: 420px) {
+  .settings-row {
+    flex-direction: column;
+  }
+}
+
 .field__input {
   width: 100%;
   font-size: 22px;
@@ -82,9 +109,13 @@ body {
   text-align: center;
 }
 
+.field__input--orange {
+  --accent-current: var(--accent-2);
+}
+
 .field__input:focus {
-  border-color: rgba(89, 208, 255, 0.75);
-  box-shadow: 0 0 0 4px rgba(89, 208, 255, 0.16);
+  border-color: color-mix(in srgb, var(--accent-current) 75%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-current) 18%, transparent);
 }
 
 .btn {
@@ -105,8 +136,16 @@ body {
 }
 
 .btn--primary {
-  border-color: rgba(89, 208, 255, 0.4);
-  background: linear-gradient(180deg, rgba(89, 208, 255, 0.24), rgba(89, 208, 255, 0.08));
+  border-color: color-mix(in srgb, var(--accent-current) 45%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent-current) 26%, transparent),
+    color-mix(in srgb, var(--accent-current) 10%, transparent)
+  );
+}
+
+.btn--orange {
+  --accent-current: var(--accent-2);
 }
 
 .btn--ghost {
@@ -142,8 +181,13 @@ body {
 
 .gauge__progress {
   stroke: var(--ring);
-  filter: drop-shadow(0 6px 18px rgba(89, 208, 255, 0.2));
+  filter: drop-shadow(0 10px 28px var(--ring-glow));
   transition: stroke-dashoffset 80ms linear;
+}
+
+.app[data-theme="orange"] .gauge__progress {
+  stroke: rgba(255, 154, 58, 0.95);
+  filter: drop-shadow(0 10px 28px rgba(255, 154, 58, 0.22));
 }
 
 .gauge__center {
@@ -194,6 +238,10 @@ body {
   100% {
     background: var(--bg);
   }
+}
+
+.app[data-theme="orange"] {
+  --accent-current: var(--accent-2);
 }
 
 @media (prefers-reduced-motion: reduce) {
