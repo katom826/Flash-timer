@@ -190,6 +190,17 @@ body {
   filter: drop-shadow(0 10px 28px rgba(255, 154, 58, 0.22));
 }
 
+.sub {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.preset-title {
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
 .gauge__center {
   position: absolute;
   inset: 0;
@@ -203,12 +214,6 @@ body {
   font-size: 52px;
   font-weight: 800;
   letter-spacing: 0.02em;
-}
-
-.timeup__title {
-  font-size: 44px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
 }
 
 .sr-only {
@@ -225,6 +230,11 @@ body {
 
 /* Timeup blinking */
 .app.is-blinking {
+  animation: flash-bg 900ms ease-in-out infinite;
+}
+
+/* Limited blink (work quota reached) */
+.app.is-blinking-temp {
   animation: flash-bg 900ms ease-in-out infinite;
 }
 
@@ -246,6 +256,10 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .app.is-blinking {
+    animation: none;
+    background: color-mix(in srgb, var(--danger) 35%, var(--bg));
+  }
+  .app.is-blinking-temp {
     animation: none;
     background: color-mix(in srgb, var(--danger) 35%, var(--bg));
   }
