@@ -21,6 +21,7 @@ const PREV_VALUE_KEY = "prevValue";
 
 let rafId = null;
 let confettiRafId = null;
+let tickTimeoutId = null;
 let mode = "prep"; // "prep" | "running"
 let runningKind = null; // "break" | "work" | null
 
@@ -28,6 +29,9 @@ let startAtMs = 0;
 let endAtMs = 0;
 let targetMs = 0;
 let didQuotaCelebrate = false;
+
+const TIMER_FPS = 20;
+const TIMER_INTERVAL_MS = Math.round(1000 / TIMER_FPS);
 
 function prefersReducedMotion() {
   return window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
@@ -174,6 +178,10 @@ function stopLoop() {
     cancelAnimationFrame(rafId);
     rafId = null;
   }
+  if (tickTimeoutId != null) {
+    clearTimeout(tickTimeoutId);
+    tickTimeoutId = null;
+  }
   stopConfetti();
 }
 
@@ -191,6 +199,13 @@ function setMode(nextMode) {
   } else {
     appEl.classList.remove("is-blinking");
   }
+}
+
+function scheduleTick(frameFn) {
+  tickTimeoutId = window.setTimeout(() => {
+    tickTimeoutId = null;
+    rafId = requestAnimationFrame(frameFn);
+  }, TIMER_INTERVAL_MS);
 }
 
 function resetToPrep() {
@@ -217,14 +232,15 @@ function startBreak(minutes) {
 
   const frame = () => {
     const msLeft = Math.max(0, endAtMs - performance.now());
-    timeDisplay.textContent = formatMMSS(Math.ceil(msLeft / 1000));
+    const nextText = formatMMSS(Math.ceil(msLeft / 1000));
+    if (timeDisplay.textContent !== nextText) timeDisplay.textContent = nextText;
     setGaugeProgress(targetMs > 0 ? msLeft / targetMs : 0);
 
     if (msLeft <= 0) {
       resetToPrep();
       return;
     }
-    rafId = requestAnimationFrame(frame);
+    scheduleTick(frame);
   };
   rafId = requestAnimationFrame(frame);
 }
@@ -246,9 +262,11 @@ function startWork(minutes) {
     setGaugeProgress(targetMs > 0 ? remainingMs / targetMs : 0);
 
     if (remainingMs > 0) {
-      timeDisplay.textContent = formatMMSS(Math.ceil(remainingMs / 1000));
+      const nextText = formatMMSS(Math.ceil(remainingMs / 1000));
+      if (timeDisplay.textContent !== nextText) timeDisplay.textContent = nextText;
     } else {
-      timeDisplay.textContent = formatMMSS(Math.floor(elapsedMs / 1000));
+      const nextText = formatMMSS(Math.floor(elapsedMs / 1000));
+      if (timeDisplay.textContent !== nextText) timeDisplay.textContent = nextText;
     }
 
     if (!didQuotaCelebrate && targetMs > 0 && elapsedMs >= targetMs) {
@@ -256,7 +274,7 @@ function startWork(minutes) {
       launchConfetti();
     }
 
-    rafId = requestAnimationFrame(frame);
+    scheduleTick(frame);
   };
   rafId = requestAnimationFrame(frame);
 }
