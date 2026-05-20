@@ -12,20 +12,139 @@ const timeDisplay = document.getElementById("timeDisplay");
 const runningLabel = document.getElementById("runningLabel");
 const stopBtn = document.getElementById("stopBtn");
 const progressCircle = document.querySelector(".gauge__progress");
+const confettiCanvas = document.getElementById("confetti");
+const confettiCtx = confettiCanvas?.getContext?.("2d") ?? null;
 
 const LS_KEY_BREAK = "flash_timer_break_minutes";
 const LS_KEY_WORK = "flash_timer_work_minutes";
 const PREV_VALUE_KEY = "prevValue";
-const BLINK_CYCLE_MS = 900;
 
 let rafId = null;
+let confettiRafId = null;
 let mode = "prep"; // "prep" | "running"
 let runningKind = null; // "break" | "work" | null
 
 let startAtMs = 0;
 let endAtMs = 0;
 let targetMs = 0;
-let didQuotaBlink = false;
+let didQuotaCelebrate = false;
+
+function prefersReducedMotion() {
+  return window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
+}
+
+function resizeConfettiCanvas() {
+  if (!confettiCanvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const w = Math.floor(window.innerWidth * dpr);
+  const h = Math.floor(window.innerHeight * dpr);
+  if (confettiCanvas.width === w && confettiCanvas.height === h) return;
+  confettiCanvas.width = w;
+  confettiCanvas.height = h;
+}
+
+function stopConfetti() {
+  if (confettiRafId != null) {
+    cancelAnimationFrame(confettiRafId);
+    confettiRafId = null;
+  }
+  if (confettiCtx && confettiCanvas) {
+    confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+  }
+}
+
+function launchConfetti() {
+  if (!confettiCanvas || !confettiCtx) return;
+  if (prefersReducedMotion()) return;
+
+  stopConfetti();
+  resizeConfettiCanvas();
+
+  const dpr = window.devicePixelRatio || 1;
+  const width = confettiCanvas.width;
+  const height = confettiCanvas.height;
+
+  const colors = ["#59d0ff", "#ff9a3a", "#ffd166", "#9bff6b", "#ff5aa5", "#ffffff"];
+  const count = 140;
+  const gravity = 620 * dpr;
+  const drag = 0.993;
+
+  const particles = Array.from({ length: count }, () => {
+    const x = width * (0.35 + Math.random() * 0.3);
+    const y = height + (20 + Math.random() * 60) * dpr;
+    const vx = (Math.random() - 0.5) * 980 * dpr;
+    const vy = -(900 + Math.random() * 950) * dpr;
+    const size = (6 + Math.random() * 10) * dpr;
+    const rot = Math.random() * Math.PI * 2;
+    const vr = (Math.random() - 0.5) * 10;
+    return {
+      x,
+      y,
+      vx,
+      vy,
+      size,
+      rot,
+      vr,
+      color: colors[(Math.random() * colors.length) | 0],
+      shape: Math.random() < 0.5 ? "rect" : "tri",
+    };
+  });
+
+  const maxDurationMs = 9000;
+  const start = performance.now();
+  let lastT = start;
+
+  const frame = (t) => {
+    const dt = Math.min(0.034, (t - lastT) / 1000);
+    lastT = t;
+
+    confettiCtx.clearRect(0, 0, width, height);
+    confettiCtx.save();
+
+    let anyVisible = false;
+    for (const p of particles) {
+      p.vy += gravity * dt;
+      p.vx *= Math.pow(drag, dt * 60);
+      p.vy *= Math.pow(drag, dt * 60);
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.rot += p.vr * dt;
+
+      if (p.y + p.size * 0.8 < -20 * dpr) continue;
+      if (p.y - p.size * 0.8 > height + 60 * dpr) continue;
+      if (p.x + p.size < -60 * dpr) continue;
+      if (p.x - p.size > width + 60 * dpr) continue;
+      anyVisible = true;
+
+      confettiCtx.save();
+      confettiCtx.translate(p.x, p.y);
+      confettiCtx.rotate(p.rot);
+      confettiCtx.fillStyle = p.color;
+
+      if (p.shape === "tri") {
+        confettiCtx.beginPath();
+        confettiCtx.moveTo(0, -p.size * 0.6);
+        confettiCtx.lineTo(-p.size * 0.55, p.size * 0.6);
+        confettiCtx.lineTo(p.size * 0.55, p.size * 0.6);
+        confettiCtx.closePath();
+        confettiCtx.fill();
+      } else {
+        confettiCtx.fillRect(-p.size * 0.5, -p.size * 0.35, p.size, p.size * 0.7);
+      }
+      confettiCtx.restore();
+    }
+
+    confettiCtx.restore();
+
+    if (!anyVisible || t - start >= maxDurationMs) {
+      stopConfetti();
+      return;
+    }
+    confettiRafId = requestAnimationFrame(frame);
+  };
+
+  confettiRafId = requestAnimationFrame(frame);
+}
 
 function clampInt(value, min, max) {
   if (!Number.isFinite(value)) return null;
@@ -39,13 +158,6 @@ function formatMMSS(seconds) {
   const mm = String(Math.floor(safe / 60)).padStart(2, "0");
   const ss = String(safe % 60).padStart(2, "0");
   return `${mm}:${ss}`;
-}
-
-function formatMSS(seconds) {
-  const safe = Math.max(0, Math.trunc(seconds));
-  const m = String(Math.floor(safe / 60));
-  const ss = String(safe % 60).padStart(2, "0");
-  return `${m}:${ss}`;
 }
 
 function setGaugeProgress(fraction) {
@@ -62,6 +174,7 @@ function stopLoop() {
     cancelAnimationFrame(rafId);
     rafId = null;
   }
+  stopConfetti();
 }
 
 function setMode(nextMode) {
@@ -73,21 +186,11 @@ function setMode(nextMode) {
 
   if (nextMode === "prep") {
     appEl.classList.add("is-blinking");
-    appEl.classList.remove("is-blinking-temp");
     delete appEl.dataset.theme;
     runningKind = null;
   } else {
     appEl.classList.remove("is-blinking");
-    appEl.classList.remove("is-blinking-temp");
   }
-}
-
-function blinkTemp(times) {
-  appEl.classList.add("is-blinking-temp");
-  const durationMs = BLINK_CYCLE_MS * times;
-  window.setTimeout(() => {
-    appEl.classList.remove("is-blinking-temp");
-  }, durationMs);
 }
 
 function resetToPrep() {
@@ -102,7 +205,7 @@ function resetToPrep() {
 function startBreak(minutes) {
   stopLoop();
   runningKind = "break";
-  didQuotaBlink = false;
+  didQuotaCelebrate = false;
   targetMs = minutes * 60_000;
   const now = performance.now();
   startAtMs = now;
@@ -129,23 +232,28 @@ function startBreak(minutes) {
 function startWork(minutes) {
   stopLoop();
   runningKind = "work";
-  didQuotaBlink = false;
+  didQuotaCelebrate = false;
   targetMs = minutes * 60_000;
   startAtMs = performance.now();
 
   appEl.dataset.theme = "orange";
-  runningLabel.textContent = `ノルマ：${formatMSS(minutes * 60)}`;
+  runningLabel.textContent = "";
   setMode("running");
 
   const frame = () => {
     const elapsedMs = Math.max(0, performance.now() - startAtMs);
-    timeDisplay.textContent = formatMMSS(Math.floor(elapsedMs / 1000));
     const remainingMs = Math.max(0, targetMs - elapsedMs);
     setGaugeProgress(targetMs > 0 ? remainingMs / targetMs : 0);
 
-    if (!didQuotaBlink && targetMs > 0 && elapsedMs >= targetMs) {
-      didQuotaBlink = true;
-      blinkTemp(3);
+    if (remainingMs > 0) {
+      timeDisplay.textContent = formatMMSS(Math.ceil(remainingMs / 1000));
+    } else {
+      timeDisplay.textContent = formatMMSS(Math.floor(elapsedMs / 1000));
+    }
+
+    if (!didQuotaCelebrate && targetMs > 0 && elapsedMs >= targetMs) {
+      didQuotaCelebrate = true;
+      launchConfetti();
     }
 
     rafId = requestAnimationFrame(frame);
@@ -231,3 +339,6 @@ stopBtn.addEventListener("click", resetToPrep);
 
 setGaugeProgress(0);
 setMode("prep");
+
+window.addEventListener("resize", resizeConfettiCanvas);
+resizeConfettiCanvas();
