@@ -25,11 +25,20 @@
                 type="number"
                 inputmode="numeric"
                 min="1"
-                max="999"
+                max="20"
                 step="1"
                 aria-label="制限分数"
               />
             </label>
+            <input
+              id="breakMinutesSlider"
+              class="slider"
+              type="range"
+              min="1"
+              max="20"
+              step="1"
+              aria-label="制限分数スライダー"
+            />
             <button class="btn btn--primary" id="breakStartBtn" type="button">開始</button>
           </div>
 
@@ -42,11 +51,20 @@
                 type="number"
                 inputmode="numeric"
                 min="1"
-                max="999"
+                max="20"
                 step="1"
                 aria-label="ノルマ分数"
               />
             </label>
+            <input
+              id="workMinutesSlider"
+              class="slider slider--orange"
+              type="range"
+              min="1"
+              max="20"
+              step="1"
+              aria-label="ノルマ分数スライダー"
+            />
             <button class="btn btn--primary btn--orange" id="workStartBtn" type="button">開始</button>
           </div>
         </div>

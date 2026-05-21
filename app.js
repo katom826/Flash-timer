@@ -5,6 +5,8 @@ const panelRunning = document.getElementById("panel-running");
 
 const breakMinutesInput = document.getElementById("breakMinutesInput");
 const workMinutesInput = document.getElementById("workMinutesInput");
+const breakMinutesSlider = document.getElementById("breakMinutesSlider");
+const workMinutesSlider = document.getElementById("workMinutesSlider");
 const breakStartBtn = document.getElementById("breakStartBtn");
 const workStartBtn = document.getElementById("workStartBtn");
 
@@ -279,12 +281,12 @@ function startWork(minutes) {
   rafId = requestAnimationFrame(frame);
 }
 
-function attachMinutesPersistence(inputEl, storageKey) {
+function attachMinutesPersistence(inputEl, sliderEl, storageKey) {
   if (!inputEl) return;
 
   const save = () => {
     const raw = Number(inputEl.value);
-    const minutes = clampInt(raw, 1, 999);
+    const minutes = clampInt(raw, 1, 20);
     try {
       if (minutes == null) localStorage.removeItem(storageKey);
       else localStorage.setItem(storageKey, String(minutes));
@@ -296,11 +298,33 @@ function attachMinutesPersistence(inputEl, storageKey) {
   try {
     const saved = localStorage.getItem(storageKey);
     if (saved != null) inputEl.value = saved;
+    if (sliderEl) {
+      if (saved != null) sliderEl.value = saved;
+      else if (!sliderEl.value) sliderEl.value = "1";
+    }
   } catch {
     // ignore
   }
 
   inputEl.addEventListener("input", save);
+  inputEl.addEventListener("input", () => {
+    if (!sliderEl) return;
+    const raw = Number(inputEl.value);
+    const minutes = clampInt(raw, 1, 20);
+    if (minutes == null) return;
+    sliderEl.value = String(minutes);
+  });
+
+  if (sliderEl) {
+    if (!sliderEl.value) sliderEl.value = "1";
+    sliderEl.addEventListener("input", () => {
+      const minutes = clampInt(Number(sliderEl.value), 1, 999);
+      if (minutes == null) return;
+      inputEl.value = String(minutes);
+      delete inputEl.dataset[PREV_VALUE_KEY];
+      save();
+    });
+  }
 
   // Mobile-friendly: don't autofocus, but when focused clear the previous value.
   inputEl.addEventListener("focus", () => {
@@ -325,7 +349,7 @@ function handleStart(kind) {
   const inputEl = kind === "break" ? breakMinutesInput : workMinutesInput;
   const storageKey = kind === "break" ? LS_KEY_BREAK : LS_KEY_WORK;
   const raw = Number(inputEl.value);
-  const minutes = clampInt(raw, 1, 999);
+  const minutes = clampInt(raw, 1, 20);
   if (minutes == null) {
     inputEl.focus();
     inputEl.select?.();
@@ -340,8 +364,8 @@ function handleStart(kind) {
   else startWork(minutes);
 }
 
-attachMinutesPersistence(breakMinutesInput, LS_KEY_BREAK);
-attachMinutesPersistence(workMinutesInput, LS_KEY_WORK);
+attachMinutesPersistence(breakMinutesInput, breakMinutesSlider, LS_KEY_BREAK);
+attachMinutesPersistence(workMinutesInput, workMinutesSlider, LS_KEY_WORK);
 
 breakStartBtn.addEventListener("click", () => handleStart("break"));
 workStartBtn.addEventListener("click", () => handleStart("work"));
