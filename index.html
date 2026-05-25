@@ -17,7 +17,10 @@
 
         <div class="settings-row" aria-label="タイマー選択">
           <div class="settings-col">
-            <div class="preset-title">休憩タイマー</div>
+            <div class="preset-header">
+              <div class="preset-title">休憩</div>
+              <div class="preset-header__right" aria-hidden="true"></div>
+            </div>
             <label class="field">
               <input
                 id="breakMinutesInput"
@@ -43,7 +46,24 @@
           </div>
 
           <div class="settings-col">
-            <div class="preset-title">作業タイマー</div>
+            <div class="preset-header">
+              <div class="preset-title">作業</div>
+              <div class="count-tools" aria-label="カウントモード">
+                <label class="check" aria-label="カウントトグル">
+                  <input id="countToggle" class="check__input" type="checkbox" />
+                  <span class="check__box" aria-hidden="true"></span>
+                </label>
+                <button class="icon-btn" id="countResetBtn" type="button" aria-label="カウントをリセット">
+                  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                    <path
+                      fill="currentColor"
+                      d="M12 5a7 7 0 1 1-6.1 3.6a1 1 0 0 1 1.74-1A5 5 0 1 0 12 7h-1.2a1 1 0 0 1-.7-1.71l2.2-2.2a1 1 0 0 1 1.4 0l2.2 2.2A1 1 0 0 1 15.2 7H12Z"
+                    />
+                  </svg>
+                </button>
+                <div class="count-display" id="countTotalDisplay" aria-label="カウント合計">0:00:00</div>
+              </div>
+            </div>
             <label class="field">
               <input
                 id="workMinutesInput"
@@ -82,6 +102,8 @@
           <div class="gauge__center">
             <div class="time" id="timeDisplay" aria-live="polite" aria-atomic="true">00:00</div>
             <div class="sub" id="runningLabel"></div>
+            <div class="sub" id="workCountStatus" hidden></div>
+            <div class="sub" id="workCountLive" hidden></div>
           </div>
         </div>
 

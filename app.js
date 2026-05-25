@@ -12,13 +12,21 @@ const workStartBtn = document.getElementById("workStartBtn");
 
 const timeDisplay = document.getElementById("timeDisplay");
 const runningLabel = document.getElementById("runningLabel");
+const workCountStatus = document.getElementById("workCountStatus");
+const workCountLive = document.getElementById("workCountLive");
 const stopBtn = document.getElementById("stopBtn");
 const progressCircle = document.querySelector(".gauge__progress");
 const confettiCanvas = document.getElementById("confetti");
 const confettiCtx = confettiCanvas?.getContext?.("2d") ?? null;
 
+const countToggle = document.getElementById("countToggle");
+const countResetBtn = document.getElementById("countResetBtn");
+const countTotalDisplay = document.getElementById("countTotalDisplay");
+
 const LS_KEY_BREAK = "flash_timer_break_minutes";
 const LS_KEY_WORK = "flash_timer_work_minutes";
+const LS_KEY_COUNT_ENABLED = "flash_timer_count_enabled";
+const LS_KEY_COUNT_TOTAL_MS = "flash_timer_count_total_ms";
 const PREV_VALUE_KEY = "prevValue";
 
 let rafId = null;
@@ -31,6 +39,10 @@ let startAtMs = 0;
 let endAtMs = 0;
 let targetMs = 0;
 let didQuotaCelebrate = false;
+let countEnabled = false;
+let countTotalMs = 0;
+let countWorkStartPerf = null;
+let countWorkStartBaseTotalMs = 0;
 
 const TIMER_FPS = 20;
 const TIMER_INTERVAL_MS = Math.round(1000 / TIMER_FPS);
@@ -166,6 +178,83 @@ function formatMMSS(seconds) {
   return `${mm}:${ss}`;
 }
 
+function formatHMMSS(totalSeconds) {
+  const safe = Math.max(0, Math.trunc(totalSeconds));
+  const h = Math.floor(safe / 3600);
+  const mm = String(Math.floor((safe % 3600) / 60)).padStart(2, "0");
+  const ss = String(safe % 60).padStart(2, "0");
+  return `${h}:${mm}:${ss}`;
+}
+
+function loadCountState() {
+  try {
+    countEnabled = localStorage.getItem(LS_KEY_COUNT_ENABLED) === "1";
+  } catch {
+    countEnabled = false;
+  }
+  try {
+    const raw = localStorage.getItem(LS_KEY_COUNT_TOTAL_MS);
+    countTotalMs = raw ? Math.max(0, Number(raw)) : 0;
+  } catch {
+    countTotalMs = 0;
+  }
+}
+
+function persistCountState() {
+  try {
+    localStorage.setItem(LS_KEY_COUNT_ENABLED, countEnabled ? "1" : "0");
+    localStorage.setItem(LS_KEY_COUNT_TOTAL_MS, String(Math.max(0, Math.trunc(countTotalMs))));
+  } catch {
+    // ignore
+  }
+}
+
+function setCountEnabled(next) {
+  countEnabled = !!next;
+  if (countToggle) countToggle.checked = countEnabled;
+  persistCountState();
+  renderCountDisplays();
+}
+
+function resetCountTotal() {
+  countTotalMs = 0;
+  persistCountState();
+  renderCountDisplays();
+}
+
+function getLiveCountTotalMs(nowPerf) {
+  if (!countEnabled) return countTotalMs;
+  if (countWorkStartPerf == null) return countTotalMs;
+  const delta = Math.max(0, nowPerf - countWorkStartPerf);
+  return countWorkStartBaseTotalMs + delta;
+}
+
+function renderCountDisplays(nowPerf = performance.now()) {
+  if (countTotalDisplay) {
+    const ms = getLiveCountTotalMs(nowPerf);
+    countTotalDisplay.textContent = formatHMMSS(Math.floor(ms / 1000));
+  }
+  if (workCountStatus) {
+    if (mode === "running" && runningKind === "work") {
+      workCountStatus.hidden = false;
+      workCountStatus.textContent = countEnabled ? "カウントON" : "カウントOFF";
+    } else {
+      workCountStatus.hidden = true;
+      workCountStatus.textContent = "";
+    }
+  }
+  if (workCountLive) {
+    if (mode === "running" && runningKind === "work" && countEnabled) {
+      workCountLive.hidden = false;
+      const ms = getLiveCountTotalMs(nowPerf);
+      workCountLive.textContent = formatHMMSS(Math.floor(ms / 1000));
+    } else {
+      workCountLive.hidden = true;
+      workCountLive.textContent = "";
+    }
+  }
+}
+
 function setGaugeProgress(fraction) {
   if (!progressCircle) return;
   const radius = progressCircle.r.baseVal.value;
@@ -184,6 +273,14 @@ function stopLoop() {
     clearTimeout(tickTimeoutId);
     tickTimeoutId = null;
   }
+  // If work timer was counting, finalize total.
+  if (countWorkStartPerf != null) {
+    const finalMs = getLiveCountTotalMs(performance.now());
+    countTotalMs = finalMs;
+    countWorkStartPerf = null;
+    countWorkStartBaseTotalMs = 0;
+    persistCountState();
+  }
   stopConfetti();
 }
 
@@ -198,6 +295,7 @@ function setMode(nextMode) {
     appEl.classList.add("is-blinking");
     delete appEl.dataset.theme;
     runningKind = null;
+    renderCountDisplays();
   } else {
     appEl.classList.remove("is-blinking");
   }
@@ -258,8 +356,18 @@ function startWork(minutes) {
   runningLabel.textContent = "";
   setMode("running");
 
+  if (countEnabled) {
+    countWorkStartPerf = performance.now();
+    countWorkStartBaseTotalMs = countTotalMs;
+  } else {
+    countWorkStartPerf = null;
+    countWorkStartBaseTotalMs = 0;
+  }
+  renderCountDisplays();
+
   const frame = () => {
-    const elapsedMs = Math.max(0, performance.now() - startAtMs);
+    const now = performance.now();
+    const elapsedMs = Math.max(0, now - startAtMs);
     const remainingMs = Math.max(0, targetMs - elapsedMs);
     setGaugeProgress(targetMs > 0 ? remainingMs / targetMs : 0);
 
@@ -276,6 +384,7 @@ function startWork(minutes) {
       launchConfetti();
     }
 
+    renderCountDisplays(now);
     scheduleTick(frame);
   };
   rafId = requestAnimationFrame(frame);
@@ -366,6 +475,17 @@ function handleStart(kind) {
 
 attachMinutesPersistence(breakMinutesInput, breakMinutesSlider, LS_KEY_BREAK);
 attachMinutesPersistence(workMinutesInput, workMinutesSlider, LS_KEY_WORK);
+
+loadCountState();
+setCountEnabled(countEnabled);
+renderCountDisplays();
+
+if (countToggle) {
+  countToggle.addEventListener("change", () => setCountEnabled(countToggle.checked));
+}
+if (countResetBtn) {
+  countResetBtn.addEventListener("click", resetCountTotal);
+}
 
 breakStartBtn.addEventListener("click", () => handleStart("break"));
 workStartBtn.addEventListener("click", () => handleStart("work"));
