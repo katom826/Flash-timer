@@ -212,6 +212,8 @@ function persistCountState() {
 function setCountEnabled(next) {
   countEnabled = !!next;
   if (countToggle) countToggle.checked = countEnabled;
+  if (countEnabled) appEl.dataset.count = "on";
+  else delete appEl.dataset.count;
   persistCountState();
   renderCountDisplays();
 }
@@ -352,7 +354,7 @@ function startWork(minutes) {
   targetMs = minutes * 60_000;
   startAtMs = performance.now();
 
-  appEl.dataset.theme = "orange";
+  appEl.dataset.theme = countEnabled ? "red" : "orange";
   runningLabel.textContent = "";
   setMode("running");
 

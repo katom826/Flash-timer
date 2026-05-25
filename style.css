@@ -7,6 +7,7 @@
   --accent-2: #ff9a3a;
   --accent-current: var(--accent-1);
   --danger: #ff3a3a;
+  --accent-3: #ff3a3a;
   --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
   --ring-track: rgba(233, 238, 246, 0.14);
   --ring: color-mix(in srgb, var(--accent-current) 92%, white);
@@ -232,6 +233,23 @@ input[type="number"] {
   --accent-current: var(--accent-2);
 }
 
+/* Count mode => make work area red in prep mode */
+.app[data-count="on"] #panel-prep .field__input--orange {
+  --accent-current: var(--accent-3);
+}
+
+.app[data-count="on"] #panel-prep .slider--orange {
+  --accent-current: var(--accent-3);
+}
+
+.app[data-count="on"] #panel-prep .btn--orange {
+  --accent-current: var(--accent-3);
+}
+
+.app[data-count="on"] #panel-prep .count-tools {
+  --accent-current: var(--accent-3);
+}
+
 .btn--ghost {
   background: transparent;
 }
@@ -252,6 +270,7 @@ input[type="number"] {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  --accent-current: var(--accent-2);
 }
 
 .count-display {
@@ -324,8 +343,8 @@ input[type="number"] {
 }
 
 .check__input:checked + .check__box {
-  background: color-mix(in srgb, var(--accent-2) 30%, rgba(0, 0, 0, 0.18));
-  border-color: color-mix(in srgb, var(--accent-2) 60%, rgba(255, 255, 255, 0.22));
+  background: color-mix(in srgb, var(--accent-current) 30%, rgba(0, 0, 0, 0.18));
+  border-color: color-mix(in srgb, var(--accent-current) 60%, rgba(255, 255, 255, 0.22));
 }
 
 .check__input:checked + .check__box::after {
@@ -368,6 +387,11 @@ input[type="number"] {
 .app[data-theme="orange"] .gauge__progress {
   stroke: rgba(255, 154, 58, 0.95);
   filter: drop-shadow(0 10px 28px rgba(255, 154, 58, 0.22));
+}
+
+.app[data-theme="red"] .gauge__progress {
+  stroke: rgba(255, 58, 58, 0.95);
+  filter: drop-shadow(0 10px 28px rgba(255, 58, 58, 0.22));
 }
 
 .sub {
@@ -427,6 +451,10 @@ input[type="number"] {
 
 .app[data-theme="orange"] {
   --accent-current: var(--accent-2);
+}
+
+.app[data-theme="red"] {
+  --accent-current: var(--accent-3);
 }
 
 @media (prefers-reduced-motion: reduce) {
