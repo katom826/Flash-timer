@@ -8,6 +8,8 @@ const workMinutesInput = document.getElementById("workMinutesInput");
 const breakMinutesSlider = document.getElementById("breakMinutesSlider");
 const workMinutesSlider = document.getElementById("workMinutesSlider");
 const breakStartBtn = document.getElementById("breakStartBtn");
+const breakQuick7 = document.getElementById("breakQuick7");
+const breakQuick10 = document.getElementById("breakQuick10");
 const workStartBtn = document.getElementById("workStartBtn");
 
 const timeDisplay = document.getElementById("timeDisplay");
@@ -491,6 +493,9 @@ if (countResetBtn) {
 
 breakStartBtn.addEventListener("click", () => handleStart("break"));
 workStartBtn.addEventListener("click", () => handleStart("work"));
+
+breakQuick7?.addEventListener("click", () => startBreak(7));
+breakQuick10?.addEventListener("click", () => startBreak(10));
 
 breakMinutesInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") breakStartBtn.click();
