@@ -394,12 +394,12 @@ function startWork(minutes) {
   rafId = requestAnimationFrame(frame);
 }
 
-function attachMinutesPersistence(inputEl, sliderEl, storageKey) {
+function attachMinutesPersistence(inputEl, sliderEl, storageKey, maxMinutes) {
   if (!inputEl) return;
 
   const save = () => {
     const raw = Number(inputEl.value);
-    const minutes = clampInt(raw, 1, 20);
+    const minutes = clampInt(raw, 1, maxMinutes);
     try {
       if (minutes == null) localStorage.removeItem(storageKey);
       else localStorage.setItem(storageKey, String(minutes));
@@ -423,7 +423,7 @@ function attachMinutesPersistence(inputEl, sliderEl, storageKey) {
   inputEl.addEventListener("input", () => {
     if (!sliderEl) return;
     const raw = Number(inputEl.value);
-    const minutes = clampInt(raw, 1, 20);
+    const minutes = clampInt(raw, 1, maxMinutes);
     if (minutes == null) return;
     sliderEl.value = String(minutes);
   });
@@ -462,7 +462,7 @@ function handleStart(kind) {
   const inputEl = kind === "break" ? breakMinutesInput : workMinutesInput;
   const storageKey = kind === "break" ? LS_KEY_BREAK : LS_KEY_WORK;
   const raw = Number(inputEl.value);
-  const minutes = clampInt(raw, 1, 20);
+  const minutes = clampInt(raw, 1, kind === "break" ? 20 : 50);
   if (minutes == null) {
     inputEl.focus();
     inputEl.select?.();
@@ -477,8 +477,8 @@ function handleStart(kind) {
   else startWork(minutes);
 }
 
-attachMinutesPersistence(breakMinutesInput, breakMinutesSlider, LS_KEY_BREAK);
-attachMinutesPersistence(workMinutesInput, workMinutesSlider, LS_KEY_WORK);
+attachMinutesPersistence(breakMinutesInput, breakMinutesSlider, LS_KEY_BREAK, 20);
+attachMinutesPersistence(workMinutesInput, workMinutesSlider, LS_KEY_WORK, 50);
 
 loadCountState();
 setCountEnabled(countEnabled);
