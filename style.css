@@ -312,18 +312,6 @@ input[type="number"] {
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-current) 18%, transparent);
 }
 
-.top-reset {
-  position: fixed;
-  top: calc(16px + env(safe-area-inset-top));
-  right: calc(16px + env(safe-area-inset-right));
-  z-index: 60;
-  display: none;
-}
-
-.app[data-mode="prep"] .top-reset {
-  display: grid;
-}
-
 /* Checkbox-like toggle */
 .check {
   display: inline-grid;
