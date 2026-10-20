@@ -18,7 +18,6 @@ const progressCircle = document.querySelector(".gauge__progress");
 const confettiCanvas = document.getElementById("confetti");
 const confettiCtx = confettiCanvas?.getContext?.("2d") ?? null;
 
-const countResetBtn = document.getElementById("countResetBtn");
 const countTotalDisplay = document.getElementById("countTotalDisplay");
 const breakCountTotalDisplay = document.getElementById("breakCountTotalDisplay");
 const activityTimelineTrack = document.getElementById("activityTimelineTrack");
@@ -27,6 +26,7 @@ const LS_KEY_BREAK = "flash_timer_break_minutes";
 const LS_KEY_WORK = "flash_timer_work_minutes";
 const LS_KEY_COUNT_TOTAL_MS = "flash_timer_count_total_ms";
 const LS_KEY_BREAK_COUNT_TOTAL_MS = "flash_timer_break_count_total_ms";
+const LS_KEY_COUNT_DATE = "flash_timer_count_date";
 const LS_KEY_ACTIVITY_RECORDS = "flash_timer_activity_records";
 const PREV_VALUE_KEY = "prevValue";
 
@@ -45,6 +45,8 @@ let countTotalMs = 0;
 let breakCountTotalMs = 0;
 let countStartPerf = null;
 let countStartBaseTotalMs = 0;
+let countStateDate = "";
+let countDayResetTimeoutId = null;
 let activityStartAt = null;
 let activityRecords = [];
 
@@ -191,6 +193,21 @@ function formatHMMSS(totalSeconds) {
 }
 
 function loadCountState() {
+  const today = getLocalDateKey(Date.now());
+  try {
+    countStateDate = localStorage.getItem(LS_KEY_COUNT_DATE) || "";
+  } catch {
+    countStateDate = "";
+  }
+
+  if (countStateDate !== today) {
+    countTotalMs = 0;
+    breakCountTotalMs = 0;
+    countStateDate = today;
+    persistCountState();
+    return;
+  }
+
   try {
     const raw = localStorage.getItem(LS_KEY_COUNT_TOTAL_MS);
     countTotalMs = raw ? Math.max(0, Number(raw)) : 0;
@@ -207,6 +224,7 @@ function loadCountState() {
 
 function persistCountState() {
   try {
+    localStorage.setItem(LS_KEY_COUNT_DATE, countStateDate);
     localStorage.setItem(LS_KEY_COUNT_TOTAL_MS, String(Math.max(0, Math.trunc(countTotalMs))));
     localStorage.setItem(LS_KEY_BREAK_COUNT_TOTAL_MS, String(Math.max(0, Math.trunc(breakCountTotalMs))));
   } catch {
@@ -216,15 +234,40 @@ function persistCountState() {
 
 
 
-function resetCountTotal() {
+function getLocalDateKey(timestamp) {
+  const date = new Date(timestamp);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function resetCountsForNewDay(nowPerf = performance.now()) {
+  const today = getLocalDateKey(Date.now());
+  if (today === countStateDate) return false;
+
+  countStateDate = today;
   countTotalMs = 0;
   breakCountTotalMs = 0;
   if (countStartPerf != null) {
-    countStartPerf = performance.now();
+    countStartPerf = nowPerf;
     countStartBaseTotalMs = 0;
   }
   persistCountState();
-  renderCountDisplays();
+  return true;
+}
+
+function scheduleCountDayReset() {
+  if (countDayResetTimeoutId != null) clearTimeout(countDayResetTimeoutId);
+  const now = new Date();
+  const nextMidnight = new Date(now);
+  nextMidnight.setHours(24, 0, 0, 0);
+  countDayResetTimeoutId = window.setTimeout(() => {
+    countDayResetTimeoutId = null;
+    resetCountsForNewDay();
+    renderCountDisplays();
+    scheduleCountDayReset();
+  }, nextMidnight.getTime() - now.getTime() + 25);
 }
 
 function getCountTotalMs(kind) {
@@ -585,10 +628,14 @@ loadActivityRecords();
 appEl.dataset.count = "on";
 renderCountDisplays();
 renderActivityTimeline();
+scheduleCountDayReset();
 
-if (countResetBtn) {
-  countResetBtn.addEventListener("click", resetCountTotal);
-}
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) return;
+  resetCountsForNewDay();
+  renderCountDisplays();
+  scheduleCountDayReset();
+});
 
 breakStartBtn.addEventListener("click", () => handleStart("break"));
 workStartBtn.addEventListener("click", () => handleStart("work"));

@@ -341,39 +341,6 @@ input[type="number"] {
   color: var(--muted);
 }
 
-.icon-btn {
-  appearance: none;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--muted);
-  border-radius: 12px;
-  width: 34px;
-  height: 34px;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-}
-
-.icon-btn:active {
-  transform: translateY(1px);
-}
-
-.icon-btn:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-current) 18%, transparent);
-}
-
-.top-reset {
-  position: absolute;
-  top: calc(16px + env(safe-area-inset-top));
-  right: calc(16px + env(safe-area-inset-right));
-  z-index: 60;
-}
-
-.app[data-mode="running"] .top-reset {
-  display: none;
-}
-
 /* Checkbox-like toggle */
 .check {
   display: inline-grid;
