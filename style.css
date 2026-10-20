@@ -50,6 +50,7 @@ body {
 }
 
 .app {
+  position: relative;
   min-height: 100dvh;
   width: 100%;
   display: grid;
@@ -293,6 +294,13 @@ input[type="number"] {
 .icon-btn:focus-visible {
   outline: none;
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-current) 18%, transparent);
+}
+
+.top-reset {
+  position: absolute;
+  top: calc(16px + env(safe-area-inset-top));
+  right: calc(16px + env(safe-area-inset-right));
+  z-index: 60;
 }
 
 /* Checkbox-like toggle */
