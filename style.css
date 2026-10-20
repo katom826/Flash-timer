@@ -56,6 +56,7 @@ body {
   display: grid;
   align-content: center;
   justify-items: stretch;
+  row-gap: 16px;
   padding: 24px;
   padding-left: calc(24px + env(safe-area-inset-left));
   padding-right: calc(24px + env(safe-area-inset-right));
@@ -87,6 +88,82 @@ body {
 .panel--center > .gauge,
 .panel--center > .timeup {
   justify-self: center;
+}
+
+.activity-timeline {
+  width: min(520px, 100%);
+  justify-self: center;
+  display: grid;
+  gap: 7px;
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: var(--panel);
+}
+
+.app[data-mode="running"] .activity-timeline {
+  display: none;
+}
+
+.activity-timeline__legend {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
+.activity-timeline__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.activity-timeline__legend-item::before {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  content: "";
+}
+
+.activity-timeline__legend-item--work::before {
+  background: var(--accent-2);
+}
+
+.activity-timeline__legend-item--break::before {
+  background: var(--accent-1);
+}
+
+.activity-timeline__track {
+  position: relative;
+  height: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.activity-timeline__segment {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  min-width: 2px;
+}
+
+.activity-timeline__segment--work {
+  background: var(--accent-2);
+}
+
+.activity-timeline__segment--break {
+  background: var(--accent-1);
+}
+
+.activity-timeline__axis {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
 }
 
 .field {

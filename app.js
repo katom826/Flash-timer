@@ -21,11 +21,13 @@ const confettiCtx = confettiCanvas?.getContext?.("2d") ?? null;
 const countResetBtn = document.getElementById("countResetBtn");
 const countTotalDisplay = document.getElementById("countTotalDisplay");
 const breakCountTotalDisplay = document.getElementById("breakCountTotalDisplay");
+const activityTimelineTrack = document.getElementById("activityTimelineTrack");
 
 const LS_KEY_BREAK = "flash_timer_break_minutes";
 const LS_KEY_WORK = "flash_timer_work_minutes";
 const LS_KEY_COUNT_TOTAL_MS = "flash_timer_count_total_ms";
 const LS_KEY_BREAK_COUNT_TOTAL_MS = "flash_timer_break_count_total_ms";
+const LS_KEY_ACTIVITY_RECORDS = "flash_timer_activity_records";
 const PREV_VALUE_KEY = "prevValue";
 
 let rafId = null;
@@ -43,6 +45,8 @@ let countTotalMs = 0;
 let breakCountTotalMs = 0;
 let countStartPerf = null;
 let countStartBaseTotalMs = 0;
+let activityStartAt = null;
+let activityRecords = [];
 
 const TIMER_FPS = 20;
 const TIMER_INTERVAL_MS = Math.round(1000 / TIMER_FPS);
@@ -255,6 +259,97 @@ function renderCountDisplays(nowPerf = performance.now()) {
   }
 }
 
+function getLocalDayRange(timestamp) {
+  const start = new Date(timestamp);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+  return [start.getTime(), end.getTime()];
+}
+
+function loadActivityRecords() {
+  let saved = [];
+  try {
+    saved = JSON.parse(localStorage.getItem(LS_KEY_ACTIVITY_RECORDS) || "[]");
+  } catch {
+    saved = [];
+  }
+
+  const [todayStart, tomorrowStart] = getLocalDayRange(Date.now());
+  activityRecords = Array.isArray(saved)
+    ? saved.flatMap((record) => {
+        if (
+          (record.kind !== "work" && record.kind !== "break") ||
+          !Number.isFinite(record.startedAt) ||
+          !Number.isFinite(record.endedAt) ||
+          record.endedAt <= record.startedAt
+        ) {
+          return [];
+        }
+        const startedAt = Math.max(record.startedAt, todayStart);
+        const endedAt = Math.min(record.endedAt, tomorrowStart);
+        return endedAt > startedAt ? [{ kind: record.kind, startedAt, endedAt }] : [];
+      })
+    : [];
+
+  try {
+    localStorage.setItem(LS_KEY_ACTIVITY_RECORDS, JSON.stringify(activityRecords));
+  } catch {
+    // ignore
+  }
+}
+
+function renderActivityTimeline(now = new Date()) {
+  if (!activityTimelineTrack) return;
+
+  const dayStart = new Date(now);
+  dayStart.setHours(10, 0, 0, 0);
+  const dayEnd = new Date(now);
+  dayEnd.setHours(19, 0, 0, 0);
+  const dayDuration = dayEnd.getTime() - dayStart.getTime();
+  const segments = [];
+
+  for (const record of activityRecords) {
+    const start = Math.max(record.startedAt, dayStart.getTime());
+    const end = Math.min(record.endedAt, dayEnd.getTime());
+    if (end <= start) continue;
+
+    const segment = document.createElement("span");
+    segment.className = `activity-timeline__segment activity-timeline__segment--${record.kind}`;
+    segment.style.left = `${((start - dayStart.getTime()) / dayDuration) * 100}%`;
+    segment.style.width = `${((end - start) / dayDuration) * 100}%`;
+    const label = record.kind === "work" ? "作業" : "休憩";
+    const startTime = new Date(start).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", hour12: false });
+    const endTime = new Date(end).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", hour12: false });
+    segment.title = `${label} ${startTime}〜${endTime}`;
+    segments.push(segment);
+  }
+
+  activityTimelineTrack.replaceChildren(...segments);
+}
+
+function saveActivityRecord(endedAt) {
+  if (activityStartAt == null || !runningKind || endedAt <= activityStartAt) return;
+
+  const [todayStart, tomorrowStart] = getLocalDayRange(endedAt);
+  const startedAt = Math.max(activityStartAt, todayStart);
+  const todayEnd = Math.min(endedAt, tomorrowStart);
+  if (todayEnd > startedAt) {
+    activityRecords.push({ kind: runningKind, startedAt, endedAt: todayEnd });
+  }
+  activityRecords = activityRecords.filter(
+    (record) => record.endedAt > todayStart && record.startedAt < tomorrowStart,
+  );
+  activityStartAt = null;
+
+  try {
+    localStorage.setItem(LS_KEY_ACTIVITY_RECORDS, JSON.stringify(activityRecords));
+  } catch {
+    // ignore
+  }
+  renderActivityTimeline(new Date(endedAt));
+}
+
 function setGaugeProgress(fraction) {
   if (!progressCircle) return;
   const radius = progressCircle.r.baseVal.value;
@@ -282,6 +377,7 @@ function stopLoop() {
     countStartBaseTotalMs = 0;
     persistCountState();
   }
+  saveActivityRecord(Date.now());
   stopConfetti();
 }
 
@@ -321,6 +417,7 @@ function resetToPrep() {
 function startBreak(minutes) {
   stopLoop();
   runningKind = "break";
+  activityStartAt = Date.now();
   didQuotaCelebrate = false;
   targetMs = minutes * 60_000;
   const now = performance.now();
@@ -354,6 +451,7 @@ function startBreak(minutes) {
 function startWork(minutes) {
   stopLoop();
   runningKind = "work";
+  activityStartAt = Date.now();
   didQuotaCelebrate = false;
   targetMs = minutes * 60_000;
   startAtMs = performance.now();
@@ -483,8 +581,10 @@ attachMinutesPersistence(breakMinutesInput, breakMinutesSlider, LS_KEY_BREAK, 20
 attachMinutesPersistence(workMinutesInput, workMinutesSlider, LS_KEY_WORK, 50);
 
 loadCountState();
+loadActivityRecords();
 appEl.dataset.count = "on";
 renderCountDisplays();
+renderActivityTimeline();
 
 if (countResetBtn) {
   countResetBtn.addEventListener("click", resetCountTotal);
