@@ -8,11 +8,7 @@ const workMinutesInput = document.getElementById("workMinutesInput");
 const breakMinutesSlider = document.getElementById("breakMinutesSlider");
 const workMinutesSlider = document.getElementById("workMinutesSlider");
 const breakStartBtn = document.getElementById("breakStartBtn");
-const breakQuick5 = document.getElementById("breakQuick5");
-const breakQuick9 = document.getElementById("breakQuick9");
 const workStartBtn = document.getElementById("workStartBtn");
-const workQuick25 = document.getElementById("workQuick25");
-const workQuick50 = document.getElementById("workQuick50");
 
 const timeDisplay = document.getElementById("timeDisplay");
 const runningLabel = document.getElementById("runningLabel");
@@ -483,22 +479,6 @@ function handleStart(kind) {
   else startWork(minutes);
 }
 
-function startQuick(kind, minutes) {
-  const inputEl = kind === "break" ? breakMinutesInput : workMinutesInput;
-  const sliderEl = kind === "break" ? breakMinutesSlider : workMinutesSlider;
-  const storageKey = kind === "break" ? LS_KEY_BREAK : LS_KEY_WORK;
-  inputEl.value = String(minutes);
-  sliderEl.value = String(minutes);
-  delete inputEl.dataset[PREV_VALUE_KEY];
-  try {
-    localStorage.setItem(storageKey, String(minutes));
-  } catch {
-    // ignore
-  }
-  if (kind === "break") startBreak(minutes);
-  else startWork(minutes);
-}
-
 attachMinutesPersistence(breakMinutesInput, breakMinutesSlider, LS_KEY_BREAK, 20);
 attachMinutesPersistence(workMinutesInput, workMinutesSlider, LS_KEY_WORK, 50);
 
@@ -512,11 +492,6 @@ if (countResetBtn) {
 
 breakStartBtn.addEventListener("click", () => handleStart("break"));
 workStartBtn.addEventListener("click", () => handleStart("work"));
-
-breakQuick5?.addEventListener("click", () => startQuick("break", 5));
-breakQuick9?.addEventListener("click", () => startQuick("break", 9));
-workQuick25?.addEventListener("click", () => startQuick("work", 25));
-workQuick50?.addEventListener("click", () => startQuick("work", 50));
 
 breakMinutesInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") breakStartBtn.click();

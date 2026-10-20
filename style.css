@@ -217,16 +217,6 @@ input[type="number"] {
   letter-spacing: 0.02em;
 }
 
-.btn-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-
-.btn-row .btn {
-  padding: 11px 10px;
-}
-
 .btn:active {
   transform: translateY(1px);
 }
