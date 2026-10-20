@@ -243,23 +243,6 @@ input[type="number"] {
   --accent-current: var(--accent-2);
 }
 
-/* Count mode => make work area red in prep mode */
-.app[data-count="on"] #panel-prep .field__input--orange {
-  --accent-current: var(--accent-3);
-}
-
-.app[data-count="on"] #panel-prep .slider--orange {
-  --accent-current: var(--accent-3);
-}
-
-.app[data-count="on"] #panel-prep .btn--orange {
-  --accent-current: var(--accent-3);
-}
-
-.app[data-count="on"] #panel-prep .count-tools {
-  --accent-current: var(--accent-3);
-}
-
 .btn--ghost {
   background: transparent;
 }

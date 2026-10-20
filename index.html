@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
@@ -53,7 +53,7 @@
           <div class="settings-col">
             <div class="preset-header">
               <div class="preset-title">作業</div>
-              <div class="count-tools" aria-label="カウントモード">
+              <div class="count-tools" aria-label="カウント合計">
                 <button class="icon-btn" id="countResetBtn" type="button" aria-label="カウントをリセット">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" width="18" height="18" aria-hidden="true">
                     <path
@@ -62,10 +62,6 @@
                     />
                   </svg>
                 </button>
-                <label class="check" aria-label="カウントトグル">
-                  <input id="countToggle" class="check__input" type="checkbox" />
-                  <span class="check__box" aria-hidden="true"></span>
-                </label>
                 <div class="count-display" id="countTotalDisplay" aria-label="カウント合計">0:00:00</div>
               </div>
             </div>
@@ -111,7 +107,6 @@
           <div class="gauge__center">
             <div class="time" id="timeDisplay" aria-live="polite" aria-atomic="true">00:00</div>
             <div class="sub" id="runningLabel"></div>
-            <div class="sub" id="workCountStatus" hidden></div>
             <div class="sub" id="workCountLive" hidden></div>
           </div>
         </div>
@@ -123,3 +118,4 @@
     <script src="app.js"></script>
   </body>
 </html>
+

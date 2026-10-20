@@ -1,4 +1,4 @@
-const appEl = document.getElementById("app");
+﻿const appEl = document.getElementById("app");
 
 const panelPrep = document.getElementById("panel-prep");
 const panelRunning = document.getElementById("panel-running");
@@ -16,20 +16,17 @@ const workQuick50 = document.getElementById("workQuick50");
 
 const timeDisplay = document.getElementById("timeDisplay");
 const runningLabel = document.getElementById("runningLabel");
-const workCountStatus = document.getElementById("workCountStatus");
 const workCountLive = document.getElementById("workCountLive");
 const stopBtn = document.getElementById("stopBtn");
 const progressCircle = document.querySelector(".gauge__progress");
 const confettiCanvas = document.getElementById("confetti");
 const confettiCtx = confettiCanvas?.getContext?.("2d") ?? null;
 
-const countToggle = document.getElementById("countToggle");
 const countResetBtn = document.getElementById("countResetBtn");
 const countTotalDisplay = document.getElementById("countTotalDisplay");
 
 const LS_KEY_BREAK = "flash_timer_break_minutes";
 const LS_KEY_WORK = "flash_timer_work_minutes";
-const LS_KEY_COUNT_ENABLED = "flash_timer_count_enabled";
 const LS_KEY_COUNT_TOTAL_MS = "flash_timer_count_total_ms";
 const PREV_VALUE_KEY = "prevValue";
 
@@ -43,7 +40,7 @@ let startAtMs = 0;
 let endAtMs = 0;
 let targetMs = 0;
 let didQuotaCelebrate = false;
-let countEnabled = false;
+let countEnabled = true;
 let countTotalMs = 0;
 let countWorkStartPerf = null;
 let countWorkStartBaseTotalMs = 0;
@@ -192,11 +189,6 @@ function formatHMMSS(totalSeconds) {
 
 function loadCountState() {
   try {
-    countEnabled = localStorage.getItem(LS_KEY_COUNT_ENABLED) === "1";
-  } catch {
-    countEnabled = false;
-  }
-  try {
     const raw = localStorage.getItem(LS_KEY_COUNT_TOTAL_MS);
     countTotalMs = raw ? Math.max(0, Number(raw)) : 0;
   } catch {
@@ -206,21 +198,13 @@ function loadCountState() {
 
 function persistCountState() {
   try {
-    localStorage.setItem(LS_KEY_COUNT_ENABLED, countEnabled ? "1" : "0");
     localStorage.setItem(LS_KEY_COUNT_TOTAL_MS, String(Math.max(0, Math.trunc(countTotalMs))));
   } catch {
     // ignore
   }
 }
 
-function setCountEnabled(next) {
-  countEnabled = !!next;
-  if (countToggle) countToggle.checked = countEnabled;
-  if (countEnabled) appEl.dataset.count = "on";
-  else delete appEl.dataset.count;
-  persistCountState();
-  renderCountDisplays();
-}
+
 
 function resetCountTotal() {
   countTotalMs = 0;
@@ -239,15 +223,6 @@ function renderCountDisplays(nowPerf = performance.now()) {
   if (countTotalDisplay) {
     const ms = getLiveCountTotalMs(nowPerf);
     countTotalDisplay.textContent = formatHMMSS(Math.floor(ms / 1000));
-  }
-  if (workCountStatus) {
-    if (mode === "running" && runningKind === "work") {
-      workCountStatus.hidden = false;
-      workCountStatus.textContent = countEnabled ? "カウントON" : "カウントOFF";
-    } else {
-      workCountStatus.hidden = true;
-      workCountStatus.textContent = "";
-    }
   }
   if (workCountLive) {
     if (mode === "running" && runningKind === "work" && countEnabled) {
@@ -358,7 +333,7 @@ function startWork(minutes) {
   targetMs = minutes * 60_000;
   startAtMs = performance.now();
 
-  appEl.dataset.theme = countEnabled ? "red" : "orange";
+  appEl.dataset.theme = "orange";
   runningLabel.textContent = "";
   setMode("running");
 
@@ -499,12 +474,9 @@ attachMinutesPersistence(breakMinutesInput, breakMinutesSlider, LS_KEY_BREAK, 20
 attachMinutesPersistence(workMinutesInput, workMinutesSlider, LS_KEY_WORK, 50);
 
 loadCountState();
-setCountEnabled(countEnabled);
+appEl.dataset.count = "on";
 renderCountDisplays();
 
-if (countToggle) {
-  countToggle.addEventListener("change", () => setCountEnabled(countToggle.checked));
-}
 if (countResetBtn) {
   countResetBtn.addEventListener("click", resetCountTotal);
 }
@@ -531,3 +503,4 @@ setMode("prep");
 
 window.addEventListener("resize", resizeConfettiCanvas);
 resizeConfettiCanvas();
+
