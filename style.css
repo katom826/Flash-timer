@@ -303,6 +303,10 @@ input[type="number"] {
   z-index: 60;
 }
 
+.app[data-mode="running"] .top-reset {
+  display: none;
+}
+
 /* Checkbox-like toggle */
 .check {
   display: inline-grid;

@@ -187,7 +187,7 @@ function formatHMMSS(totalSeconds) {
   const h = Math.floor(safe / 3600);
   const mm = String(Math.floor((safe % 3600) / 60)).padStart(2, "0");
   const ss = String(safe % 60).padStart(2, "0");
-  return `${h}:${mm}:${ss}`;
+  return `${String(h).padStart(2, "0")}:${mm}:${ss}`;
 }
 
 function loadCountState() {
@@ -240,11 +240,11 @@ function getLiveCountTotalMs(kind, nowPerf) {
 function renderCountDisplays(nowPerf = performance.now()) {
   if (countTotalDisplay) {
     const ms = getLiveCountTotalMs("work", nowPerf);
-    countTotalDisplay.textContent = formatHMMSS(Math.floor(ms / 1000));
+    countTotalDisplay.textContent = `作業 ${formatHMMSS(Math.floor(ms / 1000))}`;
   }
   if (breakCountTotalDisplay) {
     const ms = getLiveCountTotalMs("break", nowPerf);
-    breakCountTotalDisplay.textContent = formatHMMSS(Math.floor(ms / 1000));
+    breakCountTotalDisplay.textContent = `休憩 ${formatHMMSS(Math.floor(ms / 1000))}`;
   }
   if (workCountLive) {
     if (mode === "running" && (runningKind === "work" || runningKind === "break")) {
